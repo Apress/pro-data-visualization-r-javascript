@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">    <script src="d3.min.js"></script>       
+</head>
+<body>
+<script>
+
+    
+    d3.text("sampleData.txt").then((data) =>  {
+
+        var dataSet = data.split(",");
+
+        var chartHeight = 460,
+            chartWidth = 400,
+            chartMin = 0,
+            chartMax = 109,
+            offset = 30
+
+        var yscale = d3.scaleLinear()
+                       .domain([chartMin, chartMax])
+                       .range([0, (chartHeight - offset)]);
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", chartWidth + offset)
+                    .attr("height", chartHeight + offset);
+
+        bars = svg.selectAll("rect")
+                  .data(dataSet)
+                  .enter()
+                  .append("rect");
+
+        bars
+            .attr("width", 35 )
+            .attr("height", (d) => yscale(d))
+            .attr("y", (d) => chartHeight - yscale(d))
+            .attr("x", (d, i) => i * 40 + offset/2)
+            .attr("fill", "#0074D9")
+            .attr("stroke", "#0074D9");
+
+        svg.selectAll("text")
+           .data(dataSet)
+           .enter()
+           .append("text")
+           .attr("x", (d, i) => i * 40 + offset/2)
+           .attr("y", (d, i) => chartHeight - yscale(d))
+           .text((d) => d)
+           .attr("dx", (d, i) => {
+                if (d.toString().length == 3) {
+                    return 3;   
+                } else {
+                    return 8;   
+                } 
+            })
+           .attr("dy", 20)
+           .attr("font-weight", 900)
+           .attr("font-family", "Roboto, sans-serif")
+           .attr("fill", "#7FDBFF");
+
+    })
+
+</script>
+
+</body>
+</html>

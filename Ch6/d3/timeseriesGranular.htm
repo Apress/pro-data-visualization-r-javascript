@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+        <script src="d3.v3.js"></script>
+<script>
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+ width = 960 - margin.left - margin.right,
+ height = 500 - margin.top - margin.bottom;
+var parseDate = d3.time.format("%m/%d/%y").parse;
+var xScale = d3.time.scale()
+ .range([0, width]);
+var yScale = d3.scale.linear()
+ .range([height, 0]);
+var xAxis = d3.svg.axis()
+         .scale(xScale)
+         .orient("bottom");
+var yAxis = d3.svg.axis()
+         .scale(yScale)
+         .orient("left");
+var line = d3.svg.line()
+ .x(function(d) { return xScale(new Date(d.key)); })
+        .y(function(d) { return yScale(d.values.length); });
+var svg = d3.select("body").append("svg")
+ .attr("width", width + margin.left + margin.right)
+ .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+ .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+d3.csv("https://jonwestfall.com/data/allbugsOrdered.csv", function(error, data) {
+        data.forEach(function(d) {
+                d.Date = parseDate(d.Date);
+        });
+ nested_data = d3.nest()
+                .key(function(d) { return d.Date; })
+                .entries(data);
+         xScale.domain(d3.extent(nested_data, function(d) { return new Date(d.key); }));
+         yScale.domain(d3.extent(nested_data, function(d) { return d.values.length; }));
+         svg.append("g")
+         .attr("transform", "translate(0," + height + ")")
+         .call(xAxis);
+                svg.append("g")
+                 .call(yAxis);
+                svg.append("path")
+                 .datum(nested_data)
+                 .attr("d", line);
+});
+</script>
+</body>
+</html>

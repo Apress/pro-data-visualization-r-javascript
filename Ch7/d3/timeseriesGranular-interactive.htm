@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+<style>
+body {
+ font: 15px sans-serif;
+}
+.trendLine {
+ fill: none;
+ stroke: #CC0000;
+ stroke-width: 1.5px;
+}
+.axis path{
+ fill: none;
+ stroke: #000;
+ shape-rendering: crispEdges;
+}
+.tooltip{
+        opacity: .75;
+        text-align:center;
+        font-size:12px;
+        width:100px;
+        padding:5px;
+        border:1px solid #a8b6ba;
+        background-color:#fff;
+        margin-bottom:5px;
+        border-radius: 19px;
+        -moz-border-radius: 19px;
+        -webkit-border-radius: 19px;
+}
+</style>
+</head>
+<body>
+        <script src="d3.v3.js"></script>
+<script>
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+ width = 960 - margin.left - margin.right,
+ height = 500 - margin.top - margin.bottom;
+var parseDate = d3.time.format("%m/%d/%y").parse;
+var xScale = d3.time.scale()
+ .range([0, width]);
+var yScale = d3.scale.linear()
+ .range([height, 0]);
+var xAxis = d3.svg.axis()
+         .scale(xScale)
+         .orient("bottom");
+var yAxis = d3.svg.axis()
+         .scale(yScale)
+         .orient("left");
+var line = d3.svg.line()
+ .x(function(d) { return xScale(new Date(d.key)); })
+ .y(function(d) { return yScale(d.values.length); });
+var tooltip = d3.select("body")
+ .append("div")
+ .attr("class", "tooltip")
+ .attr("id", "tooltip")
+ .style("position", "absolute")
+ .style("z-index", "10")
+ .style("visibility", "hidden");
+var svg = d3.select("body").append("svg")
+ .attr("width", width + margin.left + margin.right)
+ .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+ .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+d3.csv("https://jonwestfall.com/data/allbugsOrdered.csv", function(error, data) {
+        data.forEach(function(d) {
+                d.Date = parseDate(d.Date);
+        });
+ nested_data = d3.nest()
+                .key(function(d) { return d.Date; })
+                .entries(data);
+         xScale.domain(d3.extent(nested_data, function(d) { return new Date(d.key); }));
+         yScale.domain(d3.extent(nested_data, function(d) { return d.values.length; }));
+         svg.append("g")
+         .attr("transform", "translate(0," + height + ")")
+         .call(xAxis)
+         .attr("class", "axis");
+                svg.append("g")
+                 .call(yAxis)
+         .attr("class", "axis");
+                svg.append("path")
+                 .datum(nested_data)
+                 .attr("d", line)
+         .attr("class", "trendLine");
+                svg.selectAll("circle")
+                 .data(nested_data)
+                 .enter().append("circle")
+                 .attr("r", 3.5)
+                 .attr("fill", "red")
+                 .attr("cx", function(d) { return xScale(new Date(d.key)); })
+                 .attr("cy", function(d) { return yScale(d.values.length);})
+                         .on("mouseover", function(d){
+                                 document.getElementById("tooltip").innerHTML = d.key + " " + d.values.length + " bugs<br/>";
+                                 for(x=0;x<d.values.length;x++){
+                                         document.getElementById("tooltip").innerHTML += d.values[x].ID + "<br/>";
+                               }
+                                tooltip.style("visibility", "visible");
+                })
+                        .on("mousemove", function(){
+                                return tooltip.style("top", (d3.mouse(this)[1] + 25)+"px").style("left", (d3.mouse(this)[0] + 70)+"px");
+ });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<html>
+<head>
+<title></title>
+<script src="d3.js"></script>
+</head>
+<body>
+<script>
+d3.text("sampleData.csv").then((data) =>  {
+var dataSet = data.split(",");
+var chartHeight = 460,
+    chartWidth = 400,
+    chartMin = 0,
+    chartMax = 115,
+    offset = 60;
+var yscale = d3.scaleLinear()
+    .domain([chartMin,chartMax])
+    .range([0,(chartHeight)]);
+var svg = d3
+    .select("body")
+    .append("svg")
+    .attr("width", chartWidth)
+    .attr("height", chartHeight + offset);
+bars = svg
+    .selectAll("rect")
+    .data(dataSet)
+    .enter()
+    .append("rect");
+bars
+    .attr("width", 15 )
+    .attr("height", function(x){ return yscale(x);})
+    .attr("y", function(x){return (chartHeight - yscale(x));})
+    .attr("x", function(x, i){return (i * 20);})
+    .attr("fill", "#AAAAAA")
+    .attr("stroke", "#000000");
+svg.selectAll("text")
+    .data(dataSet)
+    .enter()
+    .append("text")
+    .attr("x", function(d, i) { return ((i * 20) + offset/4); })
+    .attr("y", function(x, i){return (chartHeight - yscale(x) - 24) ;})
+    .attr("dx", -15/2)
+    .attr("dy", "1.2em")
+    .attr("text-anchor", "middle")
+    .text(function(d) { return d;})
+    .attr("fill", "black");
+  })
+</script>
+</body>
+</html>

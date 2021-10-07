@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+          <meta charset="utf-8">
+    <title></title>
+        <script src="d3.v3.js"></script>
+        <style type="text/css">
+        body {
+          font: 15px sans-serif;
+        }
+        .axis path{
+          fill: none;
+          stroke: #000;
+          shape-rendering: crispEdges;
+        }
+        .bar {
+          fill: #666666;
+        }
+    </style>  </head>
+  <body>
+    <script type="text/javascript">
+var w = 960,
+    h = 500,
+    x = d3.scale.ordinal().rangeRoundBands([0, w]),
+    y = d3.scale.linear().range([0,h]),
+    z = d3.scale.ordinal().range(["lightpink", "darkgray", "lightblue"])
+    margin = {top: 20, right: 20, bottom: 30, left: 40},
+    adjustedHeight = 500 - margin.top - margin.bottom;
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+        var svg = d3.select("body").append("svg")
+            .attr("width", w)
+            .attr("height", h)
+          .append("g")
+        function drawAxes(){
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + adjustedHeight + ")")
+              .call(xAxis);
+         }
+         function transitionVisuaization(vis){
+                 var rect = svg.selectAll(".groupedBar")
+                .transition()
+                .attr("opacity", vis)
+         }
+        d3.csv("https://jonwestfall.com/data/productionincidents.csv", function(error, data) {
+            nested_data = d3.nest()
+                         .key(function(d) { return d.Feature; })
+                         .entries(data);
+                var grouped_data = new Array();
+                //for stacked bar chart
+                nested_data.forEach(function (d) {
+                         tempObj = {"Feature": d.key, "Sev1":0, "Sev2":0, "Sev3":0, "Sev4":0};
+                         d.values.forEach(function(e){
+                                 if(e.Severity == 1)
+                                 tempObj.Sev1++;
+                                 else if(e.Severity == 2)
+                                 tempObj.Sev2++
+                                 else if(e.Severity == 3)
+                                 tempObj.Sev3++;
+                                 else if(e.Severity == 4)
+                                 tempObj.Sev4++;
+                         })
+                         grouped_data[grouped_data.length] = tempObj
+                });
+function stackedBarChart(){
+  var sevStatus = d3.layout.stack()(["Sev1", "Sev2", "Sev3", "Sev4"].map(function(sevs) {
+    return grouped_data.map(function(d) {
+      return {x: d.Feature, y: +d[sevs]};
+    });
+  }));
+  x.domain(sevStatus[0].map(function(d) { return d.x; }));
+  y.domain([0, d3.max(sevStatus[sevStatus.length - 1], function(d) { return d.y0 + d.y; })]);
+  // Add a group for each sev category.
+  var sevs = svg.selectAll("g.sevs")
+      .data(sevStatus)
+    .enter().append("g")
+      .attr("class", "sevs")
+      .style("fill", function(d, i) { return z(i); });
+  var rect = sevs.selectAll("rect")
+      .data(function(data){ return data; })
+    .enter().append("svg:rect")
+      .attr("x", function(d) { return x(d.x) + 13; })
+      .attr("y", function(d) { return -y(d.y0) - y(d.y) + adjustedHeight; })
+          .attr("class", "groupedBar")
+          .attr("opacity", 0)
+      .attr("height", function(d) { return y(d.y) ; })
+      .attr("width", x.rangeBand() - 20)
+          .on("mouseover", function(d){
+                  transitionVisuaization(1)
+          })
+          .on("mouseout", function(d){
+                  transitionVisuaization(0)
+          });
+  }
+  function barchart(){
+          svg.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          var xScale = d3.scale.ordinal()
+              .rangeRoundBands([0, w], .1);
+          var yScale = d3.scale.linear()
+              .range([h, 0]);
+      xScale.domain(nested_data.map(function(d) { return d.key; }));
+      yScale.domain([0, d3.max(nested_data, function(d) { return d.values.length; })]);
+      svg.selectAll(".bar")
+          .data(nested_data)
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function(d) { return xScale(d.key); })
+          .attr("width", xScale.rangeBand())
+          .attr("y", function(d) { return yScale(d.values.length) - 50; })
+          .attr("height", function(d) { return h - yScale(d.values.length); })
+          .on("mouseover", function(d){
+                           transitionVisuaization(1)
+          })
+        stackedBarChart()
+    drawAxes()
+  }
+  barchart();
+});
+    </script>
+  </body>
+</html>
